@@ -1,0 +1,33 @@
+<section class="fm-console">
+  <header class="fm-now">
+    <span class="fm-label">NOW PLAYING</span>
+    <span class="fm-title">{{#if current}}{{current.title}}{{else}}— no track —{{/if}}</span>
+    <span class="fm-status">{{#if state.playing}}▶ PLAYING{{else}}❚❚ PAUSED{{/if}}</span>
+  </header>
+
+  <nav class="fm-transport">
+    <button type="button" data-action="prev" title="Previous" {{#unless tracks.length}}disabled{{/unless}}><i class="fas fa-backward-step"></i></button>
+    <button type="button" data-action="toggle" title="Play / pause" {{#unless tracks.length}}disabled{{/unless}}>
+      <i class="fas {{#if state.playing}}fa-pause{{else}}fa-play{{/if}}"></i>
+    </button>
+    <button type="button" data-action="next" title="Next" {{#unless tracks.length}}disabled{{/unless}}><i class="fas fa-forward-step"></i></button>
+  </nav>
+
+  <ol class="fm-tracks">
+    {{#each tracks}}
+      <li class="{{#if this.current}}fm-current{{/if}}">
+        <span class="fm-src fm-{{this.source}}">{{this.badge}}</span>
+        <span class="fm-track-title">{{this.title}}</span>
+        <button type="button" data-action="playAt" data-index="{{@index}}" title="Play this"><i class="fas fa-play"></i></button>
+        <button type="button" data-action="remove" data-index="{{@index}}" title="Remove"><i class="fas fa-xmark"></i></button>
+      </li>
+    {{else}}
+      <li class="fm-empty">Playlist empty. Paste a YouTube or Spotify link below.</li>
+    {{/each}}
+  </ol>
+
+  <footer class="fm-add">
+    <input type="text" name="url" placeholder="YouTube or Spotify link" autocomplete="off">
+    <button type="button" data-action="add"><i class="fas fa-plus"></i> ADD</button>
+  </footer>
+</section>

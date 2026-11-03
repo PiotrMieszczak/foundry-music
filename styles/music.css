@@ -1,0 +1,104 @@
+/* Sci-fi terminal look. The panel always draws its own dark background,
+   so it stays readable whether Foundry runs its light or dark UI. */
+.foundry-music {
+  --fm-bg: #0d0f0c;
+  --fm-panel: #15180f;
+  --fm-line: #3a3420;
+  --fm-amber: #ffb000;
+  --fm-amber-dim: #a87400;
+  --fm-text: #f2e6c8;
+  --fm-red: #ff5c3a;
+  --fm-spotify: #3ddc84;
+  font-family: "Courier New", ui-monospace, Menlo, Consolas, monospace;
+  color: var(--fm-text);
+}
+
+.foundry-music button {
+  font: inherit;
+  color: var(--fm-amber);
+  background: transparent;
+  border: 1px solid var(--fm-line);
+  border-radius: 2px;
+  cursor: pointer;
+}
+.foundry-music button:hover:not(:disabled),
+.foundry-music button:focus-visible { border-color: var(--fm-amber); background: rgb(255 176 0 / 0.12); outline: none; }
+.foundry-music button:disabled { opacity: 0.4; cursor: default; }
+
+/* ---- GM console window ---- */
+.application.foundry-music { background: var(--fm-bg); border: 1px solid var(--fm-amber-dim); }
+.application.foundry-music .window-header { background: var(--fm-panel); color: var(--fm-amber); border-bottom: 1px solid var(--fm-line); letter-spacing: 0.1em; text-transform: uppercase; }
+.application.foundry-music .window-header button { border: none; }
+.application.foundry-music .window-content { background: var(--fm-bg); padding: 0.75rem; }
+
+.fm-console { display: flex; flex-direction: column; gap: 0.75rem; }
+
+.fm-now {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.25rem 0.5rem;
+  padding: 0.6rem 0.75rem;
+  background: var(--fm-panel);
+  border: 1px solid var(--fm-line);
+  border-left: 3px solid var(--fm-amber);
+}
+.fm-label { font-size: 0.7rem; letter-spacing: 0.2em; color: var(--fm-amber-dim); }
+.fm-status { font-size: 0.7rem; letter-spacing: 0.1em; color: var(--fm-amber); text-align: right; }
+.fm-title { grid-column: 1 / -1; color: var(--fm-amber); font-size: 1.05rem; overflow-wrap: anywhere; }
+
+.fm-transport { display: flex; justify-content: center; gap: 0.5rem; }
+.fm-transport button { width: 3rem; height: 2.25rem; font-size: 1rem; }
+
+.fm-tracks { list-style: none; margin: 0; padding: 0; max-height: 18rem; overflow-y: auto; border: 1px solid var(--fm-line); }
+.fm-tracks li { display: flex; align-items: center; gap: 0.5rem; padding: 0.35rem 0.5rem; border-bottom: 1px dashed var(--fm-line); }
+.fm-tracks li:last-child { border-bottom: none; }
+.fm-tracks li.fm-current { background: rgb(255 176 0 / 0.1); box-shadow: inset 3px 0 0 var(--fm-amber); }
+.fm-tracks li.fm-current .fm-track-title { color: var(--fm-amber); }
+.fm-tracks li button { width: 1.75rem; height: 1.75rem; flex: none; font-size: 0.75rem; }
+.fm-track-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-empty { color: var(--fm-amber-dim); font-style: italic; justify-content: center; }
+.fm-src { flex: none; font-size: 0.65rem; padding: 0 0.3rem; border: 1px solid currentColor; }
+.fm-src.fm-youtube { color: var(--fm-red); }
+.fm-src.fm-spotify { color: var(--fm-spotify); }
+
+.fm-add { display: flex; gap: 0.5rem; }
+.fm-add input {
+  flex: 1;
+  font: inherit;
+  color: var(--fm-text);
+  background: var(--fm-panel);
+  border: 1px solid var(--fm-line);
+  border-radius: 2px;
+  padding: 0 0.5rem;
+  height: 2rem;
+}
+.fm-add input:focus { border-color: var(--fm-amber); outline: none; box-shadow: none; }
+.fm-add input::placeholder { color: var(--fm-amber-dim); }
+.fm-add button { padding: 0 0.75rem; height: 2rem; }
+
+/* ---- now-playing bar, every user ---- */
+#fm-bar {
+  position: fixed;
+  top: 0.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: min(32rem, calc(100vw - 2rem));
+  padding: 0.3rem 0.5rem;
+  background: rgb(13 15 12 / 0.92);
+  border: 1px solid var(--fm-amber-dim);
+  border-radius: 2px;
+  font-size: 0.8rem;
+}
+#fm-bar button { height: 1.6rem; min-width: 1.6rem; padding: 0 0.4rem; line-height: 1; }
+#fm-bar .fm-join { background: var(--fm-amber); color: var(--fm-bg); border-color: var(--fm-amber); font-weight: bold; }
+#fm-bar .fm-join[hidden] { display: none; }
+.fm-bar-label { color: var(--fm-amber-dim); letter-spacing: 0.2em; font-size: 0.65rem; }
+.fm-bar-title { flex: 1; min-width: 0; color: var(--fm-amber); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fm-vol { width: 5rem; accent-color: var(--fm-amber); }
+
+/* The embeds must stay in the page to play, but nobody needs to see them. */
+#fm-host { position: fixed; left: -10000px; top: 0; width: 320px; height: 180px; overflow: hidden; pointer-events: none; }
