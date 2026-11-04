@@ -87,7 +87,7 @@ export function needsSeek(actual, expected, tolerance = 2) {
 /* ---------- playlists ---------- */
 
 // Must equal module.json "version"; a mismatch at runtime means the browser runs cached old code.
-export const VERSION = "0.2.1";
+export const VERSION = "0.2.2";
 
 export const EMPTY_STATE = Object.freeze({ playlists: [], active: null, index: 0, playing: false, offset: 0, startedAt: 0, ts: 0 });
 
@@ -111,6 +111,18 @@ export function currentTrack(state) {
 
 /** Edits a player may make when the GM allows it; everything else is GM-only. */
 export const PLAYER_EDITS = ["create", "add"];
+
+export const EDITOR_MODES = ["gm", "all", "some"];
+
+/**
+ * Check a "who can add music" change from the settings form or a player's socket request.
+ * Returns {editors, editorUsers}; throws on a bad mode. Ids that aren't players are dropped.
+ */
+export function cleanPermissions(change, playerIds) {
+  if (!EDITOR_MODES.includes(change?.editors)) throw new Error("Unknown choice for who can add music.");
+  const ids = Array.isArray(change.editorUsers) ? change.editorUsers : [];
+  return { editors: change.editors, editorUsers: [...new Set(ids.filter((id) => playerIds.includes(id)))] };
+}
 
 const clean = (text, max) => String(text ?? "").trim().slice(0, max);
 

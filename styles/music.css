@@ -161,6 +161,7 @@ body.theme-light #fm-bar {
 .foundry-music input.fm-seek,
 #fm-bar input.fm-vol {
   --fm-fill-to: var(--fm-accent);
+  color: inherit; /* inputs don't inherit text colour, and the empty track is mixed from it */
   -webkit-appearance: none;
   appearance: none;
   flex: 1;
@@ -173,14 +174,16 @@ body.theme-light #fm-bar {
   box-shadow: none;
   cursor: pointer;
 }
-#fm-bar input.fm-vol { --fm-fill-to: currentColor; color: inherit; flex: none; width: 5rem; }
+#fm-bar input.fm-vol { --fm-fill-to: currentColor; flex: none; width: 5rem; }
 .foundry-music input.fm-seek:disabled { cursor: default; opacity: 0.5; }
 :is(.fm-seek, .fm-vol)::-webkit-slider-runnable-track {
+  /* Foundry gives range tracks a 1px border, which would cover a 2px track completely. */
   height: 2px;
+  border: none;
   border-radius: 1px;
   background: linear-gradient(to right, var(--fm-fill-to) var(--fm-share, 0%), var(--fm-line) var(--fm-share, 0%));
 }
-:is(.fm-seek, .fm-vol)::-moz-range-track { height: 2px; border-radius: 1px; background: var(--fm-line); }
+:is(.fm-seek, .fm-vol)::-moz-range-track { height: 2px; border: none; border-radius: 1px; background: var(--fm-line); }
 :is(.fm-seek, .fm-vol)::-moz-range-progress { height: 2px; border-radius: 1px; background: var(--fm-fill-to); }
 :is(.fm-seek, .fm-vol)::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -305,6 +308,7 @@ body.theme-light #fm-bar {
 #fm-bar .fm-grip:active { cursor: grabbing; }
 #fm-bar .fm-state { width: 0.9rem; color: var(--fm-muted); font-size: 0.75rem; }
 #fm-bar.fm-playing .fm-state { color: var(--fm-accent); }
+#fm-bar.fm-playing .fm-toggle { color: var(--fm-accent); }
 #fm-bar .fm-bar-text {
   display: flex;
   gap: 0.4rem;

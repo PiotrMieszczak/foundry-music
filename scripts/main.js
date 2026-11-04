@@ -1,6 +1,6 @@
 import {
   positionAt, playState, pauseState, seekState, stepIndex, needsSeek, parseUrl,
-  normalize, findPlaylist, currentTrack, applyEdit, PLAYER_EDITS, EMPTY_STATE, VERSION,
+  normalize, findPlaylist, currentTrack, applyEdit, PLAYER_EDITS, EMPTY_STATE, VERSION, cleanPermissions,
 } from "./lib.js";
 
 const MOD = "foundry-music";
@@ -24,17 +24,14 @@ function canEdit(user = game.user) {
 
 Hooks.once("init", () => {
   game.settings.register(MOD, "state", { scope: "world", config: false, type: Object, default: { ...EMPTY_STATE }, onChange: refresh });
-  game.settings.register(MOD, "editors", {
-    name: "Who can create playlists and add tracks",
-    hint: "Playback, renaming, deleting and removing tracks always stay with the GM.",
-    scope: "world", config: true, type: String, default: "gm",
-    choices: { gm: "Only the GM", all: "All players", some: "Chosen players (pick them below)" },
-    onChange: () => { refresh(); ui.controls?.render(); },
-  });
-  game.settings.register(MOD, "editorUsers", { scope: "world", config: false, type: Array, default: [], onChange: refresh });
+  // Both are edited in the EditorPicker form, which players who can add music may open too.
+  game.settings.register(MOD, "editors", { scope: "world", config: false, type: String, default: "gm", onChange: permissionsChanged });
+  game.settings.register(MOD, "editorUsers", { scope: "world", config: false, type: Array, default: [], onChange: permissionsChanged });
   game.settings.registerMenu(MOD, "editorPicker", {
-    name: "Chosen players", label: "Choose players", hint: "Used when the setting above is “Chosen players”.",
-    icon: "fas fa-user-check", type: EditorPicker, restricted: true,
+    name: "Who can add music",
+    label: "Choose who can add music",
+    hint: "Create playlists and add tracks. Players who can add music may change this too. Playback, renaming, deleting and removing tracks stay with the GM.",
+    icon: "fas fa-user-check", type: EditorPicker, restricted: false,
   });
   game.settings.register(MOD, "volume", {
     name: "Music volume", hint: "Your own volume for YouTube tracks.",
@@ -70,6 +67,13 @@ Hooks.on("getSceneControlButtons", (controls) => {
   };
 });
 
+/** Who may edit changed: rebuild the scene controls so the console button appears or goes. */
+function permissionsChanged() {
+  refresh();
+  ui.controls?.render({ reset: true });
+  if (!canEdit()) consoleApp?.close();
+}
+
 /* ---------- writing shared state: the GM writes, players ask over the socket ---------- */
 
 function setState(next) {
@@ -89,10 +93,30 @@ function edit(change) {
   game.socket.emit(SOCKET, { edit: change, userId: game.user.id });
 }
 
+const playerIds = () => game.users.filter((u) => !u.isGM).map((u) => u.id);
+
+/** Save who can add music: directly for a GM, through the GM for a player who can add music. */
+async function setPermissions(change) {
+  let clean;
+  try {
+    clean = cleanPermissions(change, playerIds());
+  } catch (err) {
+    return notify("warn", err.message);
+  }
+  if (game.user.isGM) {
+    await game.settings.set(MOD, "editorUsers", clean.editorUsers);
+    return game.settings.set(MOD, "editors", clean.editors);
+  }
+  if (!canEdit()) return notify("warn", "only players who can add music may change who else can.");
+  if (!game.users.activeGM) return notify("warn", "no GM is connected to save that.");
+  game.socket.emit(SOCKET, { permissions: clean, userId: game.user.id });
+}
+
 function onRequest(message, senderId) {
   if (!isLead()) return;
   // shortcut: older cores may not pass the sender's id, so fall back to the one in the message.
   const user = game.users.get(senderId ?? message?.userId);
+  if (message?.permissions) return user && canEdit(user) && setPermissions(message.permissions);
   const change = message?.edit;
   if (!user || !canEdit(user) || !PLAYER_EDITS.includes(change?.type)) return;
   try {
@@ -461,30 +485,34 @@ function openConsole() {
   (consoleApp ??= new MusicConsole()).render({ force: true });
 }
 
-/* ---------- module settings: pick the players who may edit ---------- */
+/* ---------- module settings: who can add music ---------- */
 
 class EditorPicker extends HandlebarsApplicationMixin(ApplicationV2) {
   static DEFAULT_OPTIONS = {
     id: "foundry-music-editors",
     tag: "form",
     classes: ["foundry-music"],
-    window: { title: "Synced Music: chosen players", icon: "fas fa-user-check" },
-    position: { width: 360, height: "auto" },
+    window: { title: "Synced Music: who can add music", icon: "fas fa-user-check" },
+    position: { width: 380, height: "auto" },
     form: { handler: EditorPicker.save, closeOnSubmit: true },
   };
 
   static PARTS = { form: { template: `modules/${MOD}/templates/editors.hbs` } };
 
   static async save(_event, _form, formData) {
-    const ids = Object.entries(formData.object).filter(([, on]) => on).map(([id]) => id);
-    await game.settings.set(MOD, "editorUsers", ids);
+    const data = foundry.utils.flattenObject(formData.object); // "users.<id>" whether or not the core expanded it
+    const editorUsers = Object.keys(data).filter((k) => k.startsWith("users.") && data[k]).map((k) => k.slice(6));
+    await setPermissions({ editors: data.editors, editorUsers });
   }
 
   async _prepareContext() {
     const chosen = get("editorUsers");
+    const mode = get("editors");
     return {
+      canChange: canEdit(),
+      modes: [["gm", "Only the GM"], ["all", "All players"], ["some", "Chosen players"]]
+        .map(([value, label]) => ({ value, label, selected: value === mode })),
       users: game.users.filter((u) => !u.isGM).map((u) => ({ id: u.id, name: u.name, checked: chosen.includes(u.id) })),
-      modeIsSome: get("editors") === "some",
     };
   }
 }
@@ -497,7 +525,9 @@ function buildBar() {
   bar = Object.assign(document.createElement("div"), { id: "fm-bar", className: "foundry-music" });
   bar.innerHTML = `
     <span class="fm-grip" role="button" tabindex="0" title="Drag to move. Double-click to put it back." aria-label="Move the music bar"><i class="fas fa-grip-vertical"></i></span>
-    <i class="fm-state fas" aria-hidden="true"></i>
+    ${game.user.isGM
+      ? '<button type="button" class="fm-toggle fm-icon"><i class="fas"></i></button>'
+      : '<i class="fm-state fas" aria-hidden="true"></i>'}
     <span class="fm-bar-text"><span class="fm-bar-playlist"></span><span class="fm-bar-title"></span></span>
     <button type="button" class="fm-join">Join the music</button>
     <button type="button" class="fm-mute fm-icon"><i class="fas"></i></button>
@@ -505,6 +535,7 @@ function buildBar() {
     <button type="button" class="fm-open fm-icon" title="Open Synced Music" aria-label="Open Synced Music"><i class="fas fa-list-ul"></i></button>
     <div class="fm-progress" aria-hidden="true" hidden><span></span></div>`;
   bar.querySelector(".fm-join").addEventListener("click", join);
+  bar.querySelector(".fm-toggle")?.addEventListener("click", () => toggle());
   bar.querySelector(".fm-mute").addEventListener("click", () => game.settings.set(MOD, "muted", !get("muted")));
   const vol = bar.querySelector(".fm-vol");
   vol.addEventListener("input", () => fillSlider(vol));
@@ -554,7 +585,16 @@ function updateBar() {
   const track = currentTrack(s);
   const muted = get("muted");
   bar.classList.toggle("fm-playing", !!track && s.playing);
-  bar.querySelector(".fm-state").className = `fm-state fas ${track && s.playing ? "fa-play" : "fa-pause"}`;
+  const stateIcon = bar.querySelector(".fm-state");
+  if (stateIcon) stateIcon.className = `fm-state fas ${track && s.playing ? "fa-play" : "fa-pause"}`;
+  // The GM's button shows what a click does: pause while playing, play while paused.
+  const toggleButton = bar.querySelector(".fm-toggle");
+  if (toggleButton) {
+    const playing = !!track && s.playing;
+    toggleButton.title = toggleButton.ariaLabel = playing ? "Pause music for everyone" : "Play music for everyone";
+    toggleButton.firstElementChild.className = `fas ${playing ? "fa-pause" : "fa-play"}`;
+    toggleButton.disabled = !playing && !findPlaylist(s, s.active)?.tracks.length;
+  }
   bar.querySelector(".fm-bar-playlist").textContent = track ? findPlaylist(s, s.active).name : "";
   bar.querySelector(".fm-bar-title").textContent = track ? track.title : "No music playing";
   bar.querySelector(".fm-join").hidden = joined || !s.playing;

@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseUrl, positionAt, playState, pauseState, stepIndex, needsSeek,
-  normalize, currentTrack, applyEdit, EMPTY_STATE, seekState, VERSION,
+  normalize, currentTrack, applyEdit, EMPTY_STATE, seekState, VERSION, cleanPermissions,
 } from "./lib.js";
 import { readFileSync } from "node:fs";
 
@@ -114,4 +114,11 @@ test("VERSION matches module.json", () => {
   const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url)));
   assert.equal(VERSION, manifest.version);
   assert.ok(manifest.download.includes(`/v${VERSION}/`));
+});
+
+test("who-can-add-music changes are checked", () => {
+  assert.deepEqual(cleanPermissions({ editors: "some", editorUsers: ["p1", "gm1", "p1", 5] }, ["p1", "p2"]), { editors: "some", editorUsers: ["p1"] });
+  assert.deepEqual(cleanPermissions({ editors: "all" }, ["p1"]), { editors: "all", editorUsers: [] });
+  assert.throws(() => cleanPermissions({ editors: "admin", editorUsers: [] }, []), /Unknown choice/);
+  assert.throws(() => cleanPermissions(null, []), /Unknown choice/);
 });

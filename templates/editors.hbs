@@ -1,16 +1,28 @@
 <section class="fm-editors">
-  {{#unless modeIsSome}}
-    <p class="fm-hint">These players only get access while “Who can create playlists and add tracks” is set to “Chosen players”.</p>
+  {{#unless canChange}}
+    <p class="fm-hint">Only the GM and players who can add music can change this.</p>
   {{/unless}}
-  {{#each users}}
-    <label class="fm-check">
-      <input type="checkbox" name="{{this.id}}" {{checked this.checked}}>
-      <span>{{this.name}}</span>
-    </label>
-  {{else}}
-    <p class="fm-hint">This world has no player accounts yet.</p>
-  {{/each}}
+  <div class="form-group">
+    <label for="fm-editors-mode">Who can create playlists and add tracks</label>
+    <select id="fm-editors-mode" name="editors" {{#unless canChange}}disabled{{/unless}}>
+      {{#each modes}}<option value="{{this.value}}" {{#if this.selected}}selected{{/if}}>{{this.label}}</option>{{/each}}
+    </select>
+  </div>
+  <fieldset>
+    <legend>Chosen players</legend>
+    <p class="fm-hint">Used when the choice above is “Chosen players”.</p>
+    {{#each users}}
+      <label class="fm-check">
+        <input type="checkbox" name="users.{{this.id}}" {{checked this.checked}} {{#unless ../canChange}}disabled{{/unless}}>
+        <span>{{this.name}}</span>
+      </label>
+    {{else}}
+      <p class="fm-hint">This world has no player accounts yet.</p>
+    {{/each}}
+  </fieldset>
 </section>
+{{#if canChange}}
 <footer class="form-footer">
   <button type="submit"><i class="fas fa-save"></i> Save</button>
 </footer>
+{{/if}}

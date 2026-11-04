@@ -13,7 +13,8 @@ every connected player hears the same music. No build step, no dependencies.
   the field at the bottom and press **Add** (or Enter) to add it to the playlist you're
   looking at.
 - **Playback (GM).** Play/pause, previous, next, play any track, and drag the position
-  slider to move through the playing track for everyone.
+  slider to move through the playing track for everyone. The GM's now-playing bar also has a
+  play/pause button, so the music can be stopped without opening the console.
 - **Players** get a now-playing bar showing playlist and track, with their own mute and
   volume. Each player can drag the bar anywhere by its grip (or move it with the arrow
   keys); double-click the grip to put it back. Position, volume and mute are per browser.
@@ -26,13 +27,15 @@ every connected player hears the same music. No build step, no dependencies.
 
 ### Letting players add music
 
-In **Game Settings → Configure Settings → Synced Music**, "Who can create playlists and
-add tracks" can be **Only the GM**, **All players**, or **Chosen players** (pick them with
-**Choose players**). Allowed players see the console and can create playlists and add
-tracks. Playback, renaming, deleting playlists and removing tracks stay with the GM.
+In **Game Settings → Configure Settings → Synced Music**, press **Choose who can add music**.
+Pick **Only the GM**, **All players**, or **Chosen players** and tick the players. Allowed
+players see the console and can create playlists and add tracks. They can also open this
+form and change who else can add music. Players who can't add music see it read-only.
+Changes apply at once, with no reload. Playback, renaming, deleting playlists and removing
+tracks stay with the GM.
 
-A player's change is sent to the GM's browser over the module socket and saved there, so
-**a GM must be connected** for it to stick.
+A player's change (a track, a playlist or who can add music) is sent to the GM's browser
+over the module socket and saved there, so **a GM must be connected** for it to stick.
 
 ### Ads
 
