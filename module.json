@@ -2,7 +2,7 @@
   "id": "foundry-music",
   "title": "Synced Music",
   "description": "GM-run named playlists of YouTube and Spotify links that play in sync for every connected player.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "authors": [
     {
       "name": "Piotr Mieszczak"
@@ -10,7 +10,7 @@
   ],
   "url": "https://github.com/PiotrMieszczak/foundry-music",
   "manifest": "https://github.com/PiotrMieszczak/foundry-music/releases/latest/download/module.json",
-  "download": "https://github.com/PiotrMieszczak/foundry-music/releases/download/v0.2.0/foundry-music.zip",
+  "download": "https://github.com/PiotrMieszczak/foundry-music/releases/download/v0.2.1/foundry-music.zip",
   "compatibility": {
     "minimum": "14",
     "verified": "14.370"

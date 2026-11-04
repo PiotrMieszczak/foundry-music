@@ -104,7 +104,11 @@ To update later, run `git pull` in that folder (and repeat the `chown` if you ne
 3. After the reload, everyone has the now-playing bar. The GM opens the console from the
    **Ambient Sound** scene controls.
 
-After any update, everyone reloads their browser (F5).
+After any update, everyone does a **hard reload**: Ctrl+Shift+R (Cmd+Shift+R on a Mac).
+A plain F5 isn't enough. Foundry lets browsers keep module scripts and styles for hours
+but always fetches templates fresh, so old code ends up running against the new
+templates, and buttons stop working. If that happens, the module says so in a red
+notification.
 
 ## Releasing a new version
 
@@ -113,7 +117,8 @@ Foundry reads `module.json` from the latest GitHub release and downloads the zip
 match the tag.
 
 1. In `module.json`, bump `version` and change the tag in the `download` URL to match
-   (for example `0.2.0` and `.../download/v0.2.0/foundry-music.zip`). Commit and push.
+   (for example `0.2.0` and `.../download/v0.2.0/foundry-music.zip`). Set `VERSION` in
+   `scripts/lib.js` to the same number (`node --test` checks this). Commit and push.
 2. Build the zip, with `module.json` at its root:
 
    ```bash

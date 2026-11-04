@@ -86,6 +86,9 @@ export function needsSeek(actual, expected, tolerance = 2) {
 
 /* ---------- playlists ---------- */
 
+// Must equal module.json "version"; a mismatch at runtime means the browser runs cached old code.
+export const VERSION = "0.2.1";
+
 export const EMPTY_STATE = Object.freeze({ playlists: [], active: null, index: 0, playing: false, offset: 0, startedAt: 0, ts: 0 });
 
 /** Fill missing fields, and turn the 0.1.0 single list (`state.tracks`) into one playlist. */

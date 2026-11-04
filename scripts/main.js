@@ -1,6 +1,6 @@
 import {
   positionAt, playState, pauseState, seekState, stepIndex, needsSeek, parseUrl,
-  normalize, findPlaylist, currentTrack, applyEdit, PLAYER_EDITS, EMPTY_STATE,
+  normalize, findPlaylist, currentTrack, applyEdit, PLAYER_EDITS, EMPTY_STATE, VERSION,
 } from "./lib.js";
 
 const MOD = "foundry-music";
@@ -46,6 +46,11 @@ Hooks.once("init", () => {
 
 Hooks.once("ready", () => {
   game.modules.get(MOD).api = { open: openConsole };
+  // The server lets browsers cache scripts and styles for hours, but not templates, so after
+  // an update a plain reload can mix old code with new templates and nothing works.
+  if (game.modules.get(MOD).version !== VERSION) {
+    notify("error", "this browser is running an old cached copy. Press Ctrl+Shift+R (Cmd+Shift+R on a Mac) to load the update.");
+  }
   game.socket.on(SOCKET, onRequest);
   buildBar();
   // Browsers block sound until the page has been clicked; any click counts as joining.

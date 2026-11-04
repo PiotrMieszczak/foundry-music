@@ -2,8 +2,9 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   parseUrl, positionAt, playState, pauseState, stepIndex, needsSeek,
-  normalize, currentTrack, applyEdit, EMPTY_STATE, seekState,
+  normalize, currentTrack, applyEdit, EMPTY_STATE, seekState, VERSION,
 } from "./lib.js";
+import { readFileSync } from "node:fs";
 
 const V = "dQw4w9WgXcQ";
 const S = "37i9dQZF1DXcBWIGoYBM5M";
@@ -107,4 +108,10 @@ test("deleting the active playlist stops playback", () => {
   s = { ...s, active: "t", playing: true };
   s = applyEdit(s, { type: "delete", id: "t" }, 9);
   assert.deepEqual([s.playlists.length, s.active, s.playing], [0, null, false]);
+});
+
+test("VERSION matches module.json", () => {
+  const manifest = JSON.parse(readFileSync(new URL("../module.json", import.meta.url)));
+  assert.equal(VERSION, manifest.version);
+  assert.ok(manifest.download.includes(`/v${VERSION}/`));
 });
