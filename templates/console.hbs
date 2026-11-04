@@ -1,33 +1,74 @@
 <section class="fm-console">
-  <header class="fm-now">
-    <span class="fm-label">NOW PLAYING</span>
-    <span class="fm-title">{{#if current}}{{current.title}}{{else}}— no track —{{/if}}</span>
-    <span class="fm-status">{{#if state.playing}}▶ PLAYING{{else}}❚❚ PAUSED{{/if}}</span>
-  </header>
-
-  <nav class="fm-transport">
-    <button type="button" data-action="prev" title="Previous" {{#unless tracks.length}}disabled{{/unless}}><i class="fas fa-backward-step"></i></button>
-    <button type="button" data-action="toggle" title="Play / pause" {{#unless tracks.length}}disabled{{/unless}}>
-      <i class="fas {{#if state.playing}}fa-pause{{else}}fa-play{{/if}}"></i>
-    </button>
-    <button type="button" data-action="next" title="Next" {{#unless tracks.length}}disabled{{/unless}}><i class="fas fa-forward-step"></i></button>
+  <nav class="fm-lists" aria-label="Playlists">
+    <div class="fm-tabs">
+      {{#each playlists}}
+        <button type="button" class="fm-tab" data-action="view" data-id="{{this.id}}" aria-pressed="{{#if this.viewing}}true{{else}}false{{/if}}">
+          {{#if this.active}}<i class="fa-solid fa-volume-high" title="Playing now"></i>{{/if}}
+          <span>{{this.name}}</span>
+          <span class="fm-count">{{this.count}}</span>
+        </button>
+      {{/each}}
+    </div>
+    <div class="fm-list-actions">
+      <button type="button" class="fm-icon" data-action="create" title="New playlist" aria-label="New playlist"><i class="fa-solid fa-plus"></i></button>
+      {{#if isGM}}{{#if viewing}}
+        <button type="button" class="fm-icon" data-action="rename" title="Rename playlist" aria-label="Rename playlist"><i class="fa-solid fa-pen"></i></button>
+        <button type="button" class="fm-icon" data-action="delete" title="Delete playlist" aria-label="Delete playlist"><i class="fa-solid fa-trash"></i></button>
+      {{/if}}{{/if}}
+    </div>
   </nav>
 
-  <ol class="fm-tracks">
-    {{#each tracks}}
-      <li class="{{#if this.current}}fm-current{{/if}}">
-        <span class="fm-src fm-{{this.source}}">{{this.badge}}</span>
-        <span class="fm-track-title">{{this.title}}</span>
-        <button type="button" data-action="playAt" data-index="{{@index}}" title="Play this"><i class="fas fa-play"></i></button>
-        <button type="button" data-action="remove" data-index="{{@index}}" title="Remove"><i class="fas fa-xmark"></i></button>
-      </li>
+  <div class="fm-now">
+    {{#if now}}
+      <p class="fm-now-title">{{now.title}}</p>
+      <p class="fm-now-meta">{{now.playlist}} · {{now.source}}</p>
+      {{#if isGM}}
+        <div class="fm-seek-row">
+          <span class="fm-time fm-elapsed">–:––</span>
+          <input type="range" class="fm-seek" min="0" max="1" step="1" value="0" aria-label="Position in track" disabled>
+          <span class="fm-time fm-duration">–:––</span>
+        </div>
+      {{else}}
+        <div class="fm-progress" aria-hidden="true"><span></span></div>
+      {{/if}}
     {{else}}
-      <li class="fm-empty">Playlist empty. Paste a YouTube or Spotify link below.</li>
-    {{/each}}
-  </ol>
+      <p class="fm-now-title fm-quiet">Nothing playing</p>
+      <p class="fm-now-meta">{{#if isGM}}Pick a playlist and press play.{{else}}The GM starts the music.{{/if}}</p>
+    {{/if}}
+    {{#if isGM}}{{#if playlists.length}}
+      <div class="fm-transport">
+        <button type="button" data-action="prev" title="Previous track" aria-label="Previous track" {{#unless now}}disabled{{/unless}}><i class="fa-solid fa-backward-step"></i></button>
+        <button type="button" class="fm-primary" data-action="toggle" title="{{toggleLabel}}" aria-label="{{toggleLabel}}" {{#unless canToggle}}disabled{{/unless}}><i class="fa-solid {{toggleIcon}}"></i>{{#if toggleText}}<span>{{toggleText}}</span>{{/if}}</button>
+        <button type="button" data-action="next" title="Next track" aria-label="Next track" {{#unless now}}disabled{{/unless}}><i class="fa-solid fa-forward-step"></i></button>
+      </div>
+    {{/if}}{{/if}}
+  </div>
 
-  <footer class="fm-add">
-    <input type="text" name="url" placeholder="YouTube or Spotify link" autocomplete="off">
-    <button type="button" data-action="add"><i class="fas fa-plus"></i> ADD</button>
-  </footer>
+  {{#if viewing}}
+    <ol class="fm-tracks" aria-label="Tracks in {{viewing.name}}">
+      {{#each viewing.tracks}}
+        <li class="{{#if this.current}}fm-current{{/if}}">
+          <i class="fa-brands {{this.icon}} fm-src" title="{{this.source}} {{this.kind}}"></i>
+          <span class="fm-track-title" title="{{this.title}}">{{this.title}}</span>
+          {{#if ../isGM}}
+            <button type="button" class="fm-icon" data-action="playAt" data-index="{{@index}}" title="Play this track" aria-label="Play {{this.title}}"><i class="fa-solid fa-play"></i></button>
+            <button type="button" class="fm-icon fm-remove" data-action="remove" data-index="{{@index}}" title="Remove from playlist" aria-label="Remove {{this.title}}"><i class="fa-solid fa-xmark"></i></button>
+          {{/if}}
+          {{#if this.current}}<div class="fm-progress" aria-hidden="true"><span></span></div>{{/if}}
+        </li>
+      {{else}}
+        <li class="fm-empty">“{{viewing.name}}” is empty. Paste a YouTube or Spotify link below to add the first track.</li>
+      {{/each}}
+    </ol>
+
+    <div class="fm-add">
+      <input type="text" name="url" placeholder="Paste a YouTube or Spotify link" autocomplete="off" aria-label="YouTube or Spotify link to add to {{viewing.name}}">
+      <button type="button" data-action="add"><i class="fa-solid fa-plus"></i> Add</button>
+    </div>
+  {{else}}
+    <div class="fm-empty fm-first">
+      <p>No playlists yet. Make one for each mood: tavern, combat, travel.</p>
+      <button type="button" data-action="create"><i class="fa-solid fa-plus"></i> New playlist</button>
+    </div>
+  {{/if}}
 </section>

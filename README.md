@@ -1,24 +1,45 @@
 # Synced Music (`foundry-music`)
 
-A Foundry VTT v14 module for any game system. The GM builds a playlist of YouTube and
-Spotify links inside Foundry, presses play, and every connected player hears the same
-music. No build step, no dependencies.
+A Foundry VTT v14 module for any game system. The GM keeps named playlists of YouTube and
+Spotify links inside Foundry (one per mood: tavern, combat, travel), presses play, and
+every connected player hears the same music. No build step, no dependencies.
 
 ## How it works
 
-- **GM console.** The GM opens it from the **Ambient Sound** scene controls (the disc
-  icon) or from the disc button on the now-playing bar. Paste a link, press **ADD** (or
-  Enter), then use play/pause, previous, next, or a track's own play button. Tracks can be
-  removed; the list is saved in the world.
-- **Players** see only a small now-playing bar at the top of the screen with the track
-  title, their own mute button and volume slider. These are per-browser settings and never
-  affect anyone else.
+- **Console.** Open it from the **Ambient Sound** scene controls (the disc icon) or the
+  list button on the now-playing bar. Playlists are tabs along the top; the one playing
+  has a speaker icon. To change the mood, click a playlist tab and press play: two clicks.
+  The **+**, pencil and bin buttons create, rename and delete playlists. Paste a link into
+  the field at the bottom and press **Add** (or Enter) to add it to the playlist you're
+  looking at.
+- **Playback (GM).** Play/pause, previous, next, play any track, and drag the position
+  slider to move through the playing track for everyone.
+- **Players** get a now-playing bar showing playlist and track, with their own mute and
+  volume. Each player can drag the bar anywhere by its grip (or move it with the arrow
+  keys); double-click the grip to put it back. Position, volume and mute are per browser.
 - **Sync.** Everything shared lives in one world setting, `foundry-music.state`
-  (`{tracks, index, playing, offset, startedAt, ts}`), and only GMs write it. Each browser
-  plays the official embeds itself and catches up on load, so late joiners land on the
-  current track at the current position.
+  (`{playlists, active, index, playing, offset, startedAt, ts}`), and only GMs write it.
+  Each browser plays the official embeds itself and catches up on load, so late joiners
+  land on the current track at the current position.
 - **Autoplay.** Browsers keep a page silent until it has been clicked. Until a player
-  clicks anywhere in Foundry, the bar shows **♪ Join the music**.
+  clicks anywhere in Foundry, the bar shows **Join the music**.
+
+### Letting players add music
+
+In **Game Settings → Configure Settings → Synced Music**, "Who can create playlists and
+add tracks" can be **Only the GM**, **All players**, or **Chosen players** (pick them with
+**Choose players**). Allowed players see the console and can create playlists and add
+tracks. Playback, renaming, deleting playlists and removing tracks stay with the GM.
+
+A player's change is sent to the GM's browser over the module socket and saved there, so
+**a GM must be connected** for it to stick.
+
+### Ads
+
+YouTube may show ads inside embedded videos, and each player gets their own at a different
+moment. The module can't block them. When an ad ends, the player's video jumps back to
+the shared position (checked every 10 seconds). Spotify plays ads only to free accounts,
+and those aren't synced.
 
 ### What a link can be
 
@@ -107,8 +128,8 @@ match the tag.
 
 ## Tests
 
-The URL parsing and position maths are in `scripts/lib.js`, which has no Foundry or DOM
-dependency:
+URL parsing, position maths and playlist edits are in `scripts/lib.js`, which has no
+Foundry or DOM dependency:
 
 ```bash
 node --test

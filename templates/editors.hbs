@@ -1,0 +1,16 @@
+<section class="fm-editors">
+  {{#unless modeIsSome}}
+    <p class="fm-hint">These players only get access while “Who can create playlists and add tracks” is set to “Chosen players”.</p>
+  {{/unless}}
+  {{#each users}}
+    <label class="fm-check">
+      <input type="checkbox" name="{{this.id}}" {{checked this.checked}}>
+      <span>{{this.name}}</span>
+    </label>
+  {{else}}
+    <p class="fm-hint">This world has no player accounts yet.</p>
+  {{/each}}
+</section>
+<footer class="form-footer">
+  <button type="submit"><i class="fas fa-save"></i> Save</button>
+</footer>

@@ -67,6 +67,12 @@ export function pauseState(state, now) {
   return { ...state, playing: false, offset: positionAt(state, now), startedAt: now, ts: now };
 }
 
+/** Same track, new position (seconds); keeps playing or paused as it was. */
+export function seekState(state, seconds, now) {
+  const offset = Math.max(0, seconds);
+  return { ...state, offset, startedAt: now, ts: now };
+}
+
 /** Next (step 1) or previous (step -1) index, wrapping around the list. */
 export function stepIndex(index, step, length) {
   if (length <= 0) return 0;
@@ -76,4 +82,81 @@ export function stepIndex(index, step, length) {
 /** True when a player is far enough off the shared position to be worth a seek. */
 export function needsSeek(actual, expected, tolerance = 2) {
   return Math.abs(actual - expected) > tolerance;
+}
+
+/* ---------- playlists ---------- */
+
+export const EMPTY_STATE = Object.freeze({ playlists: [], active: null, index: 0, playing: false, offset: 0, startedAt: 0, ts: 0 });
+
+/** Fill missing fields, and turn the 0.1.0 single list (`state.tracks`) into one playlist. */
+export function normalize(state) {
+  if (!state || typeof state !== "object") return { ...EMPTY_STATE };
+  const { tracks, ...rest } = state;
+  if (Array.isArray(tracks) && !Array.isArray(state.playlists)) {
+    return { ...EMPTY_STATE, ...rest, playlists: [{ id: "playlist", name: "Playlist", tracks }], active: tracks.length ? "playlist" : null };
+  }
+  return { ...EMPTY_STATE, ...rest };
+}
+
+export function findPlaylist(state, id) {
+  return state.playlists.find((p) => p.id === id);
+}
+
+export function currentTrack(state) {
+  return findPlaylist(state, state.active)?.tracks[state.index];
+}
+
+/** Edits a player may make when the GM allows it; everything else is GM-only. */
+export const PLAYER_EDITS = ["create", "add"];
+
+const clean = (text, max) => String(text ?? "").trim().slice(0, max);
+
+/**
+ * Apply one playlist edit and return the new state. Throws an Error with a
+ * user-readable message when the edit is invalid. Edits:
+ *   {type: "create", id, name} · {type: "rename", id, name} · {type: "delete", id}
+ *   {type: "add", playlistId, url, title} · {type: "remove", playlistId, index}
+ */
+export function applyEdit(state, edit, now) {
+  const s = normalize(state);
+  const name = clean(edit.name, 60);
+  const list = findPlaylist(s, edit.playlistId ?? edit.id);
+  const replace = (p) => s.playlists.map((q) => (q.id === p.id ? p : q));
+
+  switch (edit.type) {
+    case "create":
+      if (!name) throw new Error("A playlist needs a name.");
+      if (list) throw new Error("That playlist already exists.");
+      return { ...s, playlists: [...s.playlists, { id: String(edit.id), name, tracks: [] }] };
+    case "rename":
+      if (!list) throw new Error("No such playlist.");
+      if (!name) throw new Error("A playlist needs a name.");
+      return { ...s, playlists: replace({ ...list, name }) };
+    case "delete":
+      if (!list) throw new Error("No such playlist.");
+      return {
+        ...s,
+        playlists: s.playlists.filter((p) => p !== list),
+        ...(s.active === list.id && { active: null, index: 0, playing: false, offset: 0, ts: now }),
+      };
+    case "add": {
+      if (!list) throw new Error("No such playlist.");
+      const track = parseUrl(edit.url); // re-parsed here: never trust a track object sent by a client
+      if (!track) throw new Error("That isn't a YouTube or Spotify link I can play.");
+      track.title = clean(edit.title, 200) || `${track.kind} ${track.id}`;
+      return { ...s, playlists: replace({ ...list, tracks: [...list.tracks, track] }) };
+    }
+    case "remove": {
+      const i = edit.index;
+      if (!list || !Number.isInteger(i) || !list.tracks[i]) throw new Error("No such track.");
+      const tracks = list.tracks.filter((_, j) => j !== i);
+      const next = { ...s, playlists: replace({ ...list, tracks }) };
+      if (s.active !== list.id || i > s.index) return next;
+      if (i < s.index) return { ...next, index: s.index - 1 };
+      // Removed the playing track: stop on whatever slid into its place.
+      return { ...next, index: Math.min(i, Math.max(0, tracks.length - 1)), playing: false, offset: 0, ts: now };
+    }
+    default:
+      throw new Error(`Unknown edit "${edit.type}".`);
+  }
 }
