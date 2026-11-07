@@ -13,13 +13,15 @@ every connected player hears the same music. No build step, no dependencies.
   the field at the bottom and press **Add** (or Enter) to add it to the playlist you're
   looking at.
 - **Playback (GM).** Play/pause, previous, next, play any track, and drag the position
-  slider to move through the playing track for everyone. The GM's now-playing bar also has a
+  slider to move through the playing track for everyone. **Shuffle** makes next (and the
+  end of a track) jump to a random other track; **repeat** plays the current track again
+  when it ends (on a YouTube playlist entry it loops the whole list). The GM's now-playing bar also has a
   play/pause button, so the music can be stopped without opening the console.
 - **Players** get a now-playing bar showing playlist and track, with their own mute and
   volume. Each player can drag the bar anywhere by its grip (or move it with the arrow
   keys); double-click the grip to put it back. Position, volume and mute are per browser.
 - **Sync.** Everything shared lives in one world setting, `foundry-music.state`
-  (`{playlists, active, index, playing, offset, startedAt, ts}`), and only GMs write it.
+  (`{playlists, active, index, playing, offset, startedAt, ts, shuffle, repeat}`), and only GMs write it.
   Each browser plays the official embeds itself and catches up on load, so late joiners
   land on the current track at the current position.
 - **Autoplay.** Browsers keep a page silent until it has been clicked. Until a player

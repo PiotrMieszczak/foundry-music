@@ -112,6 +112,7 @@ body.theme-light #fm-bar {
   margin-top: 0.4rem;
 }
 .fm-transport button { width: 2.75rem; min-height: 2.25rem; padding: 0; }
+.fm-console .fm-mode[aria-pressed="true"] { color: var(--fm-accent); border-color: var(--fm-accent); }
 .fm-console .fm-primary,
 .fm-console .fm-primary:hover {
   width: 3.5rem;

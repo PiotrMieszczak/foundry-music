@@ -37,9 +37,11 @@
     {{/if}}
     {{#if isGM}}{{#if playlists.length}}
       <div class="fm-transport">
+        <button type="button" class="fm-mode" data-action="shuffle" title="Shuffle" aria-label="Shuffle" aria-pressed="{{#if shuffle}}true{{else}}false{{/if}}"><i class="fa-solid fa-shuffle"></i></button>
         <button type="button" data-action="prev" title="Previous track" aria-label="Previous track" {{#unless now}}disabled{{/unless}}><i class="fa-solid fa-backward-step"></i></button>
         <button type="button" class="fm-primary" data-action="toggle" title="{{toggleLabel}}" aria-label="{{toggleLabel}}" {{#unless canToggle}}disabled{{/unless}}><i class="fa-solid {{toggleIcon}}"></i>{{#if toggleText}}<span>{{toggleText}}</span>{{/if}}</button>
         <button type="button" data-action="next" title="Next track" aria-label="Next track" {{#unless now}}disabled{{/unless}}><i class="fa-solid fa-forward-step"></i></button>
+        <button type="button" class="fm-mode" data-action="repeat" title="Repeat this track" aria-label="Repeat this track" aria-pressed="{{#if repeat}}true{{else}}false{{/if}}"><i class="fa-solid fa-repeat"></i></button>
       </div>
     {{/if}}{{/if}}
   </div>

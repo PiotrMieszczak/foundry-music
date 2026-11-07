@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  parseUrl, positionAt, playState, pauseState, stepIndex, needsSeek,
+  parseUrl, positionAt, playState, pauseState, stepIndex, nextIndex, needsSeek,
   normalize, currentTrack, applyEdit, EMPTY_STATE, seekState, VERSION, cleanPermissions,
 } from "./lib.js";
 import { readFileSync } from "node:fs";
@@ -64,6 +64,10 @@ test("step and seek", () => {
   assert.equal(stepIndex(2, 1, 3), 0);
   assert.equal(stepIndex(0, -1, 3), 2);
   assert.equal(stepIndex(5, 1, 0), 0);
+  assert.equal(nextIndex(1, 3, false), 2);
+  assert.equal(nextIndex(0, 1, true), 0);
+  for (const r of [0, 0.5, 0.999]) assert.notEqual(nextIndex(2, 4, true, () => r), 2);
+  assert.deepEqual([0, 0.34, 0.67].map((r) => nextIndex(1, 4, true, () => r)), [2, 3, 0]);
   assert.equal(needsSeek(10, 11.5), false);
   assert.equal(needsSeek(10, 13), true);
 });

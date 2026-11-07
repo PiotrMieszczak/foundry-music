@@ -1,5 +1,5 @@
 import {
-  positionAt, playState, pauseState, seekState, stepIndex, needsSeek, parseUrl,
+  positionAt, playState, pauseState, seekState, stepIndex, nextIndex, needsSeek, parseUrl,
   normalize, findPlaylist, currentTrack, applyEdit, PLAYER_EDITS, EMPTY_STATE, VERSION, cleanPermissions,
 } from "./lib.js";
 
@@ -150,7 +150,19 @@ function seek(seconds) {
 function skip(step) {
   const s = state();
   const tracks = findPlaylist(s, s.active)?.tracks ?? [];
-  if (tracks.length) return playTrack(s.active, stepIndex(s.index, step, tracks.length));
+  if (!tracks.length) return;
+  return playTrack(s.active, step === 1 ? nextIndex(s.index, tracks.length, s.shuffle) : stepIndex(s.index, step, tracks.length));
+}
+
+/** A track ended by itself: play it again on repeat, otherwise move on. */
+function trackEnded() {
+  const s = state();
+  return s.repeat ? playTrack(s.active, s.index) : skip(1);
+}
+
+/** Flip the shared "shuffle" or "repeat" switch. */
+function flip(key) {
+  return setState({ ...state(), [key]: !state()[key] });
 }
 
 async function titleFor(url) {
@@ -256,6 +268,8 @@ async function applyState() {
       p.seekTo(pos, true);
     }
     // Muting keeps the video running, so the GM's player still sees "ended" and advances the list.
+    // Repeat on a YouTube playlist entry loops the whole list inside the embed.
+    if (track.kind === "playlist") p.setLoop(s.repeat);
     muted ? p.mute() : p.unMute();
     p.setVolume(get("volume"));
     s.playing ? p.playVideo() : p.pauseVideo();
@@ -341,7 +355,7 @@ function onYtState(e) {
   }
   if (e.data !== YT.PlayerState.ENDED || !isLead()) return;
   if (currentTrack(state())?.kind === "playlist" && yt.getPlaylistIndex() < (yt.getPlaylist()?.length ?? 0) - 1) return;
-  skip(1);
+  trackEnded();
 }
 
 function onYtError(e) {
@@ -386,6 +400,8 @@ class MusicConsole extends HandlebarsApplicationMixin(ApplicationV2) {
       toggle() { return toggle(this.viewingId()); },
       prev: () => skip(-1),
       next: () => skip(1),
+      shuffle: () => flip("shuffle"),
+      repeat: () => flip("repeat"),
       playAt(_e, t) { return playTrack(this.viewingId(), Number(t.dataset.index)); },
       remove(_e, t) { return edit({ type: "remove", playlistId: this.viewingId(), index: Number(t.dataset.index) }); },
       add() { return this.addFromInput(); },
@@ -439,6 +455,8 @@ class MusicConsole extends HandlebarsApplicationMixin(ApplicationV2) {
     return {
       isGM: game.user.isGM,
       playing: s.playing,
+      shuffle: s.shuffle,
+      repeat: s.repeat,
       now: active && currentTrack(s)
         ? { playlist: active.name, title: currentTrack(s).title, source: currentTrack(s).source === "youtube" ? "YouTube" : "Spotify" }
         : null,

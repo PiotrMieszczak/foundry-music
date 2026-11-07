@@ -79,6 +79,12 @@ export function stepIndex(index, step, length) {
   return (((index + step) % length) + length) % length;
 }
 
+/** Index to move to: shuffle picks any other track at random, otherwise the next one. */
+export function nextIndex(index, length, shuffle, rand = Math.random) {
+  if (!shuffle || length < 2) return stepIndex(index, 1, length);
+  return (index + 1 + Math.floor(rand() * (length - 1))) % length; // never the current track
+}
+
 /** True when a player is far enough off the shared position to be worth a seek. */
 export function needsSeek(actual, expected, tolerance = 2) {
   return Math.abs(actual - expected) > tolerance;
@@ -87,9 +93,9 @@ export function needsSeek(actual, expected, tolerance = 2) {
 /* ---------- playlists ---------- */
 
 // Must equal module.json "version"; a mismatch at runtime means the browser runs cached old code.
-export const VERSION = "0.2.2";
+export const VERSION = "0.3.0";
 
-export const EMPTY_STATE = Object.freeze({ playlists: [], active: null, index: 0, playing: false, offset: 0, startedAt: 0, ts: 0 });
+export const EMPTY_STATE = Object.freeze({ playlists: [], active: null, index: 0, playing: false, offset: 0, startedAt: 0, ts: 0, shuffle: false, repeat: false });
 
 /** Fill missing fields, and turn the 0.1.0 single list (`state.tracks`) into one playlist. */
 export function normalize(state) {
